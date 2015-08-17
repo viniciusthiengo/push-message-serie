@@ -1,6 +1,5 @@
 package br.com.thiengo.gcmexample;
 
-import android.app.ActivityManager;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -9,20 +8,12 @@ import android.graphics.Bitmap;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.TaskStackBuilder;
-import android.util.Log;
-import android.view.WindowManager;
-import android.widget.RemoteViews;
 
 import com.google.android.gms.gcm.GcmListenerService;
 import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.Executor;
 
 import br.com.thiengo.gcmexample.domain.PushMessage;
 import br.com.thiengo.gcmexample.extra.Util;
@@ -77,9 +68,9 @@ public class MyGcmListenerService extends GcmListenerService  {
 
 
         // BIG CONTENT
-            /*NotificationCompat.BigTextStyle bigText = new NotificationCompat.BigTextStyle();
+            NotificationCompat.BigTextStyle bigText = new NotificationCompat.BigTextStyle();
             bigText.bigText( data.getString("body") );
-            builder.setStyle(bigText);*/
+            builder.setStyle(bigText);
 
             /*NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
                 String[] messages = new String[6];
@@ -93,15 +84,15 @@ public class MyGcmListenerService extends GcmListenerService  {
 
 
         // ACTION BUTTON
-            RemoteViews remoteViews = new RemoteViews(getPackageName(), R.layout.custom_notification);
+            //RemoteViews remoteViews = new RemoteViews(getPackageName(), R.layout.custom_notification);
             // YES
             Intent intent = new Intent(this, NotificationReceiver.class);
             intent.setAction(NotificationReceiver.YES_NOTIFICATION_BUTTON);
             Bundle bu = new Bundle();
             bu.putInt("data", 1);
             PendingIntent pb = PendingIntent.getBroadcast(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-            remoteViews.setOnClickPendingIntent( R.id.bt_yes, pb );
-            //builder.addAction(R.drawable.ic_yes, "Yes", pb);
+            //remoteViews.setOnClickPendingIntent( R.id.bt_yes, pb );
+            builder.addAction(R.drawable.ic_yes, "Yes", pb);
 
             // MAYBE
             intent = new Intent(this, NotificationReceiver.class);
@@ -109,8 +100,8 @@ public class MyGcmListenerService extends GcmListenerService  {
             bu = new Bundle();
             bu.putInt("data", 2);
             pb = PendingIntent.getBroadcast(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-            remoteViews.setOnClickPendingIntent( R.id.bt_maybe, pb );
-            //builder.addAction( R.drawable.ic_maybe, "Maybe", pb );
+            //remoteViews.setOnClickPendingIntent( R.id.bt_maybe, pb );
+            builder.addAction( R.drawable.ic_maybe, "Maybe", pb );
 
             // NO
             intent = new Intent(this, NotificationReceiver.class);
@@ -118,10 +109,10 @@ public class MyGcmListenerService extends GcmListenerService  {
             bu = new Bundle();
             bu.putInt("data", 3);
             pb = PendingIntent.getBroadcast(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-            remoteViews.setOnClickPendingIntent(R.id.bt_no, pb);
-            //builder.addAction( R.drawable.ic_no, "No", pb );
+            //remoteViews.setOnClickPendingIntent(R.id.bt_no, pb);
+            builder.addAction(R.drawable.ic_no, "No", pb);
 
-        builder.setContent( remoteViews );
+            //builder.setContent( remoteViews );
 
         final NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         nm.notify(id, builder.build());
@@ -132,7 +123,7 @@ public class MyGcmListenerService extends GcmListenerService  {
                 super.run();
                 Bitmap img1 = null, img2 = null;
 
-                /*try {
+                try {
                     img1 = Picasso.with(getBaseContext()).load( data.getString("large_icon") ).get();
                     img2 = Picasso.with(getBaseContext()).load( data.getString("big_picture") ).get();
                 } catch (IOException e) {
@@ -140,7 +131,7 @@ public class MyGcmListenerService extends GcmListenerService  {
                 }
 
                 builder.setLargeIcon( img1 );
-                builder.setStyle(new NotificationCompat.BigPictureStyle().bigPicture(img2));*/
+                //builder.setStyle(new NotificationCompat.BigPictureStyle().bigPicture(img2));
 
 
                 /*for( int i = 0; i < 5; i++ ){
@@ -159,27 +150,28 @@ public class MyGcmListenerService extends GcmListenerService  {
 
                 nm.notify( id, builder.build() );*/
 
-                /*builder.setPriority(NotificationCompat.PRIORITY_HIGH);
+                builder.setPriority(NotificationCompat.PRIORITY_HIGH);
                 builder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
 
                 builder.setVibrate(new long[]{1000, 1000, 1000, 1000, 1000});
 
                 Uri uri = RingtoneManager.getDefaultUri( RingtoneManager.TYPE_NOTIFICATION );
-                builder.setSound(uri);*/
+                builder.setSound(uri);
 
-
+                nm.notify(id, builder.build());
             }
         }.start();
 
-
-
-        builder.setPriority(NotificationCompat.PRIORITY_HIGH);
+        /*builder.setPriority(NotificationCompat.PRIORITY_HIGH);
         builder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
 
         builder.setVibrate(new long[]{1000, 1000, 1000, 1000, 1000});
 
         Uri uri = RingtoneManager.getDefaultUri( RingtoneManager.TYPE_NOTIFICATION );
         builder.setSound(uri);
+
+        nm.notify( id, builder.build() );
+        */
     }
 
 
