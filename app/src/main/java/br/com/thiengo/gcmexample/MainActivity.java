@@ -1,11 +1,17 @@
 package br.com.thiengo.gcmexample;
 
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
+import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -15,13 +21,12 @@ import br.com.thiengo.gcmexample.domain.PushMessage;
 import de.greenrobot.event.EventBus;
 
 public class MainActivity extends AppCompatActivity {
-    private static final String SERVER_API_KEY = "AIzaSyALBmXgAC2ywNFP_XZsapk2vtJiGA7zFM8";
-    private static final String SENDER_ID = "794914603392";
 
     private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
 
     private TextView tvTitle;
     private TextView tvMessage;
+    private Button btCallSActivity;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,9 +35,17 @@ public class MainActivity extends AppCompatActivity {
 
         EventBus.getDefault().register(this);
 
-
         tvTitle = (TextView) findViewById(R.id.tv_title);
         tvMessage = (TextView) findViewById(R.id.tv_message);
+
+        btCallSActivity = (Button) findViewById(R.id.bt_call_s_activity);
+        btCallSActivity.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent it = new Intent(MainActivity.this, SecondActivity.class);
+                startActivity(it);
+            }
+        });
 
         if( checkPlayServices() ){
             Intent it = new Intent(this, RegistrationIntentService.class);
@@ -55,7 +68,6 @@ public class MainActivity extends AppCompatActivity {
         }
         return true;
     }
-
 
 
     // LISTENER

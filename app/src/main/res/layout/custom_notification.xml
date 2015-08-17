@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="64dp"
+    android:gravity="center"
+    android:orientation="horizontal"
+    android:background="#000">
+
+    <ImageView
+        android:id="@+id/iv_img"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_marginRight="5dp"/>
+
+    <Button
+        android:id="@+id/bt_yes"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:text="Yes"
+        android:background="@null"/>
+    <Button
+        android:id="@+id/bt_maybe"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:text="Maybe"
+        android:background="@null"/>
+    <Button
+        android:id="@+id/bt_no"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:text="No"
+        android:background="@null"/>
+</LinearLayout>

@@ -7,26 +7,21 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     android:orientation="vertical"
-    tools:context=".MainActivity">
+    tools:context=".SecondActivity">
 
     <TextView
         android:id="@+id/tv_title"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text=""
+        android:text="Second Activity"
         android:textSize="18sp"/>
 
     <TextView
-        android:layout_marginTop="20dp"
-        android:id="@+id/tv_message"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="" />
-
-    <Button
-        android:id="@+id/bt_call_s_activity"
+        android:id="@+id/tv_content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Call SecondActivity"/>
+        android:text=""
+        android:layout_marginTop="20dp"
+        android:textSize="14sp"/>
 
 </LinearLayout>

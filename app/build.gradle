@@ -29,4 +29,6 @@ dependencies {
     compile 'de.greenrobot:eventbus:2.4.0'
 
     compile "com.google.android.gms:play-services-gcm:7.5.0"
+
+    compile "com.squareup.picasso:picasso:2.5.2"
 }

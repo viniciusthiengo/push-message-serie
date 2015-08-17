@@ -13,6 +13,7 @@ import com.google.android.gms.iid.InstanceID;
 
 import java.io.IOException;
 
+import br.com.thiengo.gcmexample.conf.Configuration;
 import br.com.thiengo.gcmexample.domain.User;
 import br.com.thiengo.gcmexample.domain.WrapObjToNetwork;
 import br.com.thiengo.gcmexample.network.NetworkConnection;
@@ -38,7 +39,7 @@ public class RegistrationIntentService extends IntentService {
             try {
 
                 if( !status ){
-                    String token = instanceID.getToken("794914603392",
+                    String token = instanceID.getToken(Configuration.SENDER_ID,
                             GoogleCloudMessaging.INSTANCE_ID_SCOPE,
                             null);
 

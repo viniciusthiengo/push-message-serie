@@ -7,6 +7,8 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
 
+    <uses-permission android:name="android.permission.VIBRATE" />
+
     <permission android:name="com.example.gcm.permission.C2D_MESSAGE"
         android:protectionLevel="signature" />
     <uses-permission android:name="com.example.gcm.permission.C2D_MESSAGE" />
@@ -19,7 +21,7 @@
         android:theme="@style/AppTheme" >
 
         <activity
-            android:name=".MainActivity"
+            android:name="br.com.thiengo.gcmexample.MainActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -27,6 +29,57 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+
+
+
+
+        <activity
+            android:name="br.com.thiengo.gcmexample.SecondActivity"
+            android:label="@string/second_activity_name"
+            android:parentActivityName="br.com.thiengo.gcmexample.MainActivity">
+
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="br.com.thiengo.gcmexample.MainActivity"/>
+
+        </activity>
+
+        <activity
+            android:name="br.com.thiengo.gcmexample.ThirdActivity"
+            android:label="@string/third_activity_name"
+            android:launchMode="singleTask"
+            android:excludeFromRecents="true"
+            android:taskAffinity="">
+
+        </activity>
+
+        <activity
+            android:name="br.com.thiengo.gcmexample.FourthActivity"
+            android:label="@string/fourth_activity_name"
+            android:parentActivityName="br.com.thiengo.gcmexample.SecondActivity">
+
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="br.com.thiengo.gcmexample.SecondActivity"/>
+
+        </activity>
+
+        <receiver
+            android:name=".receiver.NotificationReceiver"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name="br.com.thiengo.gcmexample.receiver.YES_NOTIFICATION_BUTTON" />
+                <action android:name="br.com.thiengo.gcmexample.receiver.MAYBE_NOTIFICATION_BUTTON" />
+                <action android:name="br.com.thiengo.gcmexample.receiver.NO_NOTIFICATION_BUTTON" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
+
+
+
+
+
 
 
 
