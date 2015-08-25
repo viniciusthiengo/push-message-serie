@@ -1,0 +1,54 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rl_container_right"
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:layout_gravity="right"
+    android:background="@android:color/white"
+    android:padding="8dp"
+    android:layout_marginLeft="50dp">
+
+
+    <TextView
+        android:id="@+id/tv_nickname_right"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/colorPrimarytext"
+        android:textSize="12sp" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignRight="@+id/tv_nickname_right"
+        android:layout_below="@+id/tv_nickname_right"
+        android:layout_marginTop="2dp"
+        android:background="@color/blue"
+        android:orientation="vertical"
+        android:padding="5dp">
+
+        <TextView
+            android:id="@+id/tv_time_right"
+            android:maxLines="1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="left"
+            android:paddingTop="4dp"
+            android:textColor="@android:color/white"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tv_message_right"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="right"
+            android:paddingTop="4dp"
+            android:textColor="@color/colorPrimarytext"
+            android:textSize="14sp" />
+
+
+    </LinearLayout>
+
+</RelativeLayout>

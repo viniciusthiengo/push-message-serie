@@ -4,10 +4,7 @@ import android.app.IntentService;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 
-import com.google.android.gms.gcm.GcmPubSub;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.android.gms.iid.InstanceID;
 
@@ -30,9 +27,11 @@ public class RegistrationIntentService extends IntentService {
     }
 
     @Override
-    protected void onHandleIntent(Intent intent) {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+    protected void onHandleIntent( Intent intent) {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences( getApplicationContext() );
         boolean status = preferences.getBoolean("status", false);
+        String nickname = preferences.getString(PM_LoginActivity.PREF_KEY_NICKNAME, "");
+
 
         synchronized (LOG){
             InstanceID instanceID = InstanceID.getInstance( this );
@@ -43,13 +42,9 @@ public class RegistrationIntentService extends IntentService {
                             GoogleCloudMessaging.INSTANCE_ID_SCOPE,
                             null);
 
-                    Log.i(LOG, "TOKEN: "+token);
-
                     preferences.edit().putBoolean("status", token != null && token.trim().length() > 0 ).apply();
-
-                    sendRegistrationId(token);
+                    sendRegistrationId(token, nickname);
                 }
-
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -59,9 +54,10 @@ public class RegistrationIntentService extends IntentService {
 
 
 
-    private void sendRegistrationId( String token ){
+    private void sendRegistrationId( String token, String nickname ){
         User user = new User();
         user.setRegistrationId( token );
+        user.setNickname( nickname );
 
         NetworkConnection
                 .getInstance(this)

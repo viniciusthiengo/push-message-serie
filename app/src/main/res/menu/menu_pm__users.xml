@@ -1,0 +1,11 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="br.com.thiengo.gcmexample.PM_UsersActivity">
+
+    <item
+        android:id="@+id/action_configurations"
+        android:orderInCategory="100"
+        android:title="@string/mn_configurations"
+        app:showAsAction="never" />
+</menu>

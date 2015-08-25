@@ -1,8 +1,30 @@
 <resources>
 
-    <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
-    </style>
+    <!-- ACTIVITY -->
+        <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        </style>
+
+        <style name="Theme.Login" parent="Theme.AppCompat.NoActionBar">
+        </style>
+
+        <style name="Theme.Default" parent="Theme.AppCompat.NoActionBar">
+            <item name="colorPrimary">@color/colorPrimary</item>
+            <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+            <item name="colorAccent">@color/colorAccent</item>
+        </style>
+
+
+    <!-- TOOLBAR -->
+        <style name="MyCustomToolbarStyle" parent="Theme.AppCompat.NoActionBar">
+            <item name="colorPrimary">@color/colorPrimary</item>
+            <item name="android:textColorPrimary">@android:color/white</item>
+            <item name="android:textColorSecondary">@android:color/white</item>
+            <item name="android:textColorHint">@android:color/white</item>
+            <item name="colorControlActivated">@android:color/white</item>
+        </style>
+
+        <style name="Theme.PM_NicknameActivity.Toolbar.BackArrow" parent="Theme.Default">
+            <item name="colorControlNormal">@android:color/white</item>
+        </style>
 
 </resources>

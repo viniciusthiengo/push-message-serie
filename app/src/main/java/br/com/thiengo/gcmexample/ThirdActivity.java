@@ -2,7 +2,6 @@ package br.com.thiengo.gcmexample;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.view.WindowManager;
 import android.widget.TextView;
 
 public class ThirdActivity extends AppCompatActivity {

@@ -15,7 +15,9 @@ import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
 
+import br.com.thiengo.gcmexample.domain.Message;
 import br.com.thiengo.gcmexample.domain.PushMessage;
+import br.com.thiengo.gcmexample.domain.User;
 import br.com.thiengo.gcmexample.extra.Util;
 import br.com.thiengo.gcmexample.receiver.NotificationReceiver;
 import de.greenrobot.event.EventBus;
@@ -25,24 +27,94 @@ import de.greenrobot.event.EventBus;
 
 
 public class MyGcmListenerService extends GcmListenerService  {
-    public static final String LOG = "LOG";
+    public static final String TAG = "LOG";
 
 
     @Override
     public void onMessageReceived(String from, Bundle data) {
-        //super.onMessageReceived(from, data);
-        //String title = data.getString("title");
-        //String message = data.getString("message");
+
+        // TYPE NOTIFICATION
+            if( data != null && Integer.parseInt(data.getString("type")) == 1 ){
+                Message m = new Message();
+                m.setId( Long.parseLong( data.getString("id") ) );
+                m.setMessage(data.getString("message"));
+                m.setRegTime(Long.parseLong(data.getString("regTime")) * 1000);
+
+                m.setUserFrom(new User());
+                m.getUserFrom().setId(Long.parseLong(data.getString("userFrom_id")));
+                m.getUserFrom().setNickname(data.getString("userFrom_nickname"));
+
+                m.setUserTo(new User());
+                m.getUserTo().setId(Long.parseLong(data.getString("userTo_id")));
+                m.getUserTo().setNickname(data.getString("userTo_nickname"));
+
+                data.putParcelable(Message.MESSAGE_KEY, m);
+            }
+
 
         if( !Util.isMyApplicationTaskOnTop(this) ){
             setNotificationApp( data );
         }
+        else{
+            if( PM_MessagesActivity.IS_ON_TOP
+                    || PM_UsersActivity.IS_ON_TOP ){
 
-        EventBus.getDefault().post(new PushMessage( data.getString("title") , data.getString("body") ));
+                PushMessage pushMessage = new PushMessage();
+
+                if( PM_MessagesActivity.IS_ON_TOP ){
+                    pushMessage.setListenerLabel( PM_MessagesActivity.class.getName() );
+                    pushMessage.setCode(PM_MessagesActivity.NEW_MESSAGE_CODE);
+                    pushMessage.setBundle(data);
+                }
+                else if( PM_UsersActivity.IS_ON_TOP ){
+                    pushMessage.setListenerLabel( PM_UsersActivity.class.getName() );
+                    pushMessage.setCode(PM_MessagesActivity.NEW_MESSAGE_CODE);
+                    pushMessage.setBundle(data);
+                }
+
+                EventBus.getDefault().post( pushMessage );
+            }
+        }
     }
 
 
     private void setNotificationApp( final Bundle data ){
+        final int id = 6565;
+
+        final NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
+                .setTicker( data.getString("message") )
+                .setSmallIcon(R.drawable.ic_new_message)
+                .setContentTitle(data.getString("title"))
+                .setContentText(data.getString("userFrom_nickname") + ": " + data.getString("message"))
+                .setAutoCancel(true);
+
+
+        Intent intent = new Intent(this, PM_LoginActivity.class);
+        intent.putExtras(data);
+
+        PendingIntent pi = PendingIntent.getActivity( this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT );
+        builder.setContentIntent( pi );
+
+
+        // BIG CONTENT
+            NotificationCompat.BigTextStyle bigText = new NotificationCompat.BigTextStyle();
+            bigText.bigText( data.getString("userFrom_nickname") + ": " + data.getString("message") );
+            builder.setStyle(bigText);
+
+        builder.setPriority(NotificationCompat.PRIORITY_HIGH);
+        builder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+
+        builder.setVibrate(new long[]{1000, 1000, 1000, 1000, 1000});
+
+        Uri uri = RingtoneManager.getDefaultUri( RingtoneManager.TYPE_NOTIFICATION );
+        builder.setSound(uri);
+
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        nm.notify( id, builder.build() );
+    }
+
+
+    private void setNotificationApp_OLD( final Bundle data ){
         final int id = 6565;
 
         final NotificationCompat.Builder builder = new NotificationCompat.Builder(this)

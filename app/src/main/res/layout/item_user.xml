@@ -1,0 +1,55 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingTop="8dp"
+    android:background="@android:color/white">
+
+    <TextView
+        android:id="@+id/tv_nickname"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:paddingLeft="10dp"
+        android:paddingTop="10dp"
+        android:text="Nickname"
+        android:textColor="@color/colorPrimarytext"
+        android:textSize="18sp" />
+
+    <TextView
+        android:layout_alignLeft="@+id/tv_nickname"
+        android:layout_below="@+id/tv_nickname"
+        android:id="@+id/tv_is_typing"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingBottom="10dp"
+        android:layout_marginLeft="10dp"
+        android:text="digitando..."
+        android:textColor="@color/colorDivider"
+        android:textSize="12sp" />
+
+    <TextView
+        android:layout_alignTop="@+id/tv_nickname"
+        android:layout_below="@+id/tv_nickname"
+        android:layout_alignParentRight="true"
+        android:id="@+id/tv_new_messages"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginRight="10dp"
+        android:padding="5dp"
+
+        android:text="9"
+        android:background="@color/red"
+        android:textColor="@android:color/white"
+        android:textSize="12sp" />
+    
+    <View
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginTop="5dp"
+        android:background="@color/colorDivider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp" />
+
+</RelativeLayout>
