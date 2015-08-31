@@ -9,10 +9,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.afollestad.materialdialogs.MaterialDialog;
+import com.afollestad.materialdialogs.Theme;
+
 import java.util.List;
 
 import br.com.thiengo.gcmexample.PM_MessagesActivity;
+import br.com.thiengo.gcmexample.PM_UsersActivity;
 import br.com.thiengo.gcmexample.R;
+import br.com.thiengo.gcmexample.domain.NotificationConf;
 import br.com.thiengo.gcmexample.domain.User;
 
 /**
@@ -49,8 +54,8 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.MyViewHolder> 
         myViewHolder.tvNewMessages.setText(mList.get(position).getNumberNewMessages() + "");
         myViewHolder.tvNewMessages.setVisibility(mList.get(position).getNumberNewMessages() > 0 ? View.VISIBLE : View.INVISIBLE);
 
-        myViewHolder.tvIsTyping.setText( mList.get(position).isTyping() ? "digitando..." : "" );
-        myViewHolder.tvIsTyping.setVisibility( mList.get(position).isTyping() ? View.VISIBLE : View.INVISIBLE );
+        myViewHolder.tvIsTyping.setText(mList.get(position).isTyping() ? "digitando..." : "");
+        myViewHolder.tvIsTyping.setVisibility(mList.get(position).isTyping() ? View.VISIBLE : View.INVISIBLE);
     }
 
 
@@ -66,7 +71,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.MyViewHolder> 
     }
 
 
-    public class MyViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+    public class MyViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener{
         public TextView tvNickname;
         public TextView tvIsTyping;
         public TextView tvNewMessages;
@@ -80,6 +85,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.MyViewHolder> 
             tvNewMessages = (TextView) itemView.findViewById(R.id.tv_new_messages);
 
             itemView.setOnClickListener(this);
+            itemView.setOnLongClickListener(this);
         }
 
 
@@ -96,6 +102,30 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.MyViewHolder> 
             intent.putExtras(bundle);
 
             mContext.startActivity( intent );
+        }
+
+        @Override
+        public boolean onLongClick(View v) {
+            final User u = mList.get(getAdapterPosition());
+
+            new MaterialDialog.Builder( mContext )
+                .title( u.getNickname() + " notificações")
+                .items( NotificationConf.CONF_LABELS )
+                .itemsCallbackSingleChoice( u.getNotificationConf().getStatus() , new MaterialDialog.ListCallbackSingleChoice() {
+                    @Override
+                    public boolean onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
+
+                        u.setNotificationConf( new NotificationConf( which, System.currentTimeMillis() ));
+                        u.getNotificationConf().generateTimeByStatus();
+
+                        ( (PM_UsersActivity) mContext ).sendConfigNotification(u);
+                        return true;
+                    }
+                })
+                .theme(Theme.LIGHT)
+                .show();
+
+            return( true );
         }
     }
 }

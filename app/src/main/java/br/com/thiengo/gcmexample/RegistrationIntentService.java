@@ -2,8 +2,6 @@ package br.com.thiengo.gcmexample;
 
 import android.app.IntentService;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.android.gms.iid.InstanceID;
@@ -13,6 +11,7 @@ import java.io.IOException;
 import br.com.thiengo.gcmexample.conf.Configuration;
 import br.com.thiengo.gcmexample.domain.User;
 import br.com.thiengo.gcmexample.domain.WrapObjToNetwork;
+import br.com.thiengo.gcmexample.extra.Pref;
 import br.com.thiengo.gcmexample.network.NetworkConnection;
 
 
@@ -28,21 +27,24 @@ public class RegistrationIntentService extends IntentService {
 
     @Override
     protected void onHandleIntent( Intent intent) {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences( getApplicationContext() );
-        boolean status = preferences.getBoolean("status", false);
-        String nickname = preferences.getString(PM_LoginActivity.PREF_KEY_NICKNAME, "");
+
+        int id = Integer.parseInt( Pref.retrievePrefKeyValue(getApplicationContext(),
+                Pref.PREF_KEY_ID,
+                "0") );
+
+        String nickname = Pref.retrievePrefKeyValue(getApplicationContext(),
+                Pref.PREF_KEY_NICKNAME);
 
 
         synchronized (LOG){
             InstanceID instanceID = InstanceID.getInstance( this );
             try {
 
-                if( !status ){
+                if( id == 0 ){
                     String token = instanceID.getToken(Configuration.SENDER_ID,
                             GoogleCloudMessaging.INSTANCE_ID_SCOPE,
                             null);
 
-                    preferences.edit().putBoolean("status", token != null && token.trim().length() > 0 ).apply();
                     sendRegistrationId(token, nickname);
                 }
 
@@ -61,6 +63,7 @@ public class RegistrationIntentService extends IntentService {
 
         NetworkConnection
                 .getInstance(this)
-                .execute( new WrapObjToNetwork(user, "save-user"), RegistrationIntentService.class.getName() );
+                .execute( new WrapObjToNetwork( user, User.METHOD_SAVE_USER ),
+                        RegistrationIntentService.class.getName() );
     }
 }

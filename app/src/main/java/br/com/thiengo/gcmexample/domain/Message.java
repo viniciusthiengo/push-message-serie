@@ -9,13 +9,21 @@ import java.util.Calendar;
  * Created by viniciusthiengo on 8/23/15.
  */
 public class Message implements Parcelable {
+    public static final String METHOD_SAVE = "save-message";
+    public static final String METHOD_REMOVE = "remove-message";
+    public static final String METHOD_LOAD_OLD = "load-old-messages";
+    public static final String METHOD_GET = "get-messages";
+
+
     public static final String MESSAGE_KEY = "br.com.thiengo.gcmexample.domain.Message.MESSAGE_KEY";
+    public static final String MESSAGES_SUMMARY_KEY = "br.com.thiengo.gcmexample.domain.Message.MESSAGES_SUMMARY_KEY";
 
     private long id;
     private User userFrom;
     private User userTo;
     private String message;
     private long regTime;
+    private int wasRead;
 
 
     public Message() {}
@@ -56,6 +64,14 @@ public class Message implements Parcelable {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public int getWasRead() {
+        return wasRead;
+    }
+
+    public void setWasRead(int wasRead) {
+        this.wasRead = wasRead;
     }
 
     public long getRegTime() {

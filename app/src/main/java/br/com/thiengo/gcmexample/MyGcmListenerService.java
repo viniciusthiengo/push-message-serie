@@ -5,19 +5,31 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.media.AudioManager;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.StyleSpan;
+import android.util.Log;
 
 import com.google.android.gms.gcm.GcmListenerService;
+import com.google.gson.Gson;
 import com.squareup.picasso.Picasso;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.io.IOException;
+import java.util.ArrayList;
 
 import br.com.thiengo.gcmexample.domain.Message;
+import br.com.thiengo.gcmexample.domain.NotificationConf;
 import br.com.thiengo.gcmexample.domain.PushMessage;
 import br.com.thiengo.gcmexample.domain.User;
+import br.com.thiengo.gcmexample.extra.Pref;
 import br.com.thiengo.gcmexample.extra.Util;
 import br.com.thiengo.gcmexample.receiver.NotificationReceiver;
 import de.greenrobot.event.EventBus;
@@ -27,33 +39,91 @@ import de.greenrobot.event.EventBus;
 
 
 public class MyGcmListenerService extends GcmListenerService  {
+
+
     public static final String TAG = "LOG";
 
 
     @Override
     public void onMessageReceived(String from, Bundle data) {
+        Log.i(TAG, "--> "+data);
 
         // TYPE NOTIFICATION
-            if( data != null && Integer.parseInt(data.getString("type")) == 1 ){
-                Message m = new Message();
-                m.setId( Long.parseLong( data.getString("id") ) );
-                m.setMessage(data.getString("message"));
-                m.setRegTime(Long.parseLong(data.getString("regTime")) * 1000);
+            if( data != null
+                && data.getString("type") != null ){
 
-                m.setUserFrom(new User());
-                m.getUserFrom().setId(Long.parseLong(data.getString("userFrom_id")));
-                m.getUserFrom().setNickname(data.getString("userFrom_nickname"));
+                if( Integer.parseInt(data.getString("type")) == 1 ){
 
-                m.setUserTo(new User());
-                m.getUserTo().setId(Long.parseLong(data.getString("userTo_id")));
-                m.getUserTo().setNickname(data.getString("userTo_nickname"));
+                    // MANY MESSAGES
+                        try{
+                            Gson gson = new Gson();
 
-                data.putParcelable(Message.MESSAGE_KEY, m);
+                            JSONObject jsonObject = new JSONObject( data.getString("userTo_new_messages") );
+                            JSONArray jsonArray = jsonObject.getJSONArray("messages");
+                            ArrayList<Message> messages = new ArrayList<>();
+
+                            for( int i = 0, tamI = jsonArray.length(); i < tamI; i++ ){
+                                Message m = gson.fromJson( jsonArray.getJSONObject( i ).toString(), Message.class );
+                                messages.add(m);
+                            }
+
+                            data.putParcelableArrayList(Message.MESSAGES_SUMMARY_KEY, messages);
+                        }
+                        catch( Exception e){
+                            e.printStackTrace();
+                        }
+
+                    // MAIN MESSAGE
+                        Message m = new Message();
+                        m.setId(Long.parseLong(data.getString("id")));
+                        m.setMessage(data.getString("message"));
+                        m.setRegTime(Long.parseLong(data.getString("regTime")));
+
+                        m.setUserFrom(new User());
+                        m.getUserFrom().setId(Long.parseLong(data.getString("userFrom_id")));
+                        m.getUserFrom().setNickname(data.getString("userFrom_nickname"));
+
+                        m.setUserTo(new User());
+                        m.getUserTo().setId(Long.parseLong(data.getString("userTo_id")));
+                        m.getUserTo().setNickname(data.getString("userTo_nickname"));
+                        m.getUserTo().setNotificationConf(new NotificationConf());
+                        m.getUserTo().getNotificationConf().setStatus( Integer.parseInt(data.getString("userTo_notification_status")) );
+                        m.getUserTo().getNotificationConf().setTime( Long.parseLong(data.getString("userTo_notification_time")) );
+
+                        data.putParcelable(Message.MESSAGE_KEY, m);
+                }
+                else if( Integer.parseInt(data.getString("type")) == 2
+                        || Integer.parseInt(data.getString("type")) == 3 ){
+
+                    Message m = new Message();
+                    m.setId(Long.parseLong(data.getString("id")));
+
+                    m.setUserFrom(new User());
+                    m.getUserFrom().setId(Long.parseLong(data.getString("userFrom_id")));
+
+                    m.setUserTo(new User());
+                    m.getUserTo().setId(Long.parseLong(data.getString("userTo_id")));
+
+                    data.putParcelable(Message.MESSAGE_KEY, m);
+                }
             }
 
 
-        if( !Util.isMyApplicationTaskOnTop(this) ){
-            setNotificationApp( data );
+        if( !Util.isMyApplicationTaskOnTop(this)
+                && data != null
+                && data.getString("type") != null
+                && Integer.parseInt(data.getString("type")) == 1 ){
+
+            long userId = Long.parseLong( Pref.retrievePrefKeyValue( getApplicationContext(), Pref.PREF_KEY_ID, "0" ) );
+            Message m = data.getParcelable(Message.MESSAGE_KEY);
+
+            // VERIFY THAT IT'S NOT THE OWNER OF THE MESSAGE
+            if( m != null
+                && m.getUserFrom() != null
+                && m.getUserFrom().getId() != userId ){
+
+                setNotificationApp( data );
+            }
         }
         else{
             if( PM_MessagesActivity.IS_ON_TOP
@@ -62,9 +132,18 @@ public class MyGcmListenerService extends GcmListenerService  {
                 PushMessage pushMessage = new PushMessage();
 
                 if( PM_MessagesActivity.IS_ON_TOP ){
-                    pushMessage.setListenerLabel( PM_MessagesActivity.class.getName() );
-                    pushMessage.setCode(PM_MessagesActivity.NEW_MESSAGE_CODE);
+                    pushMessage.setListenerLabel(PM_MessagesActivity.class.getName());
                     pushMessage.setBundle(data);
+
+                    if( Integer.parseInt(data.getString("type")) == 1 ){
+                        pushMessage.setCode( PM_MessagesActivity.NEW_MESSAGE_CODE );
+                    }
+                    else if( Integer.parseInt(data.getString("type")) == 2 ){
+                        pushMessage.setCode( PM_MessagesActivity.MESSAGE_WAS_READ_CODE );
+                    }
+                    else if( Integer.parseInt(data.getString("type")) == 3 ){
+                        pushMessage.setCode( PM_MessagesActivity.MESSAGE_REMOVED_CODE );
+                    }
                 }
                 else if( PM_UsersActivity.IS_ON_TOP ){
                     pushMessage.setListenerLabel( PM_UsersActivity.class.getName() );
@@ -79,13 +158,15 @@ public class MyGcmListenerService extends GcmListenerService  {
 
 
     private void setNotificationApp( final Bundle data ){
+
+        String userNickname = Pref.retrievePrefKeyValue(getApplicationContext(), Pref.PREF_KEY_NICKNAME, "");
+        ArrayList<Message> messages = data.getParcelableArrayList(Message.MESSAGES_SUMMARY_KEY);
         final int id = 6565;
 
         final NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
-                .setTicker( data.getString("message") )
-                .setSmallIcon(R.drawable.ic_new_message)
-                .setContentTitle(data.getString("title"))
-                .setContentText(data.getString("userFrom_nickname") + ": " + data.getString("message"))
+                .setTicker( data.getString("title") )
+                .setSmallIcon( R.drawable.ic_new_message )
+                .setContentTitle( data.getString("title") )
                 .setAutoCancel(true);
 
 
@@ -93,24 +174,69 @@ public class MyGcmListenerService extends GcmListenerService  {
         intent.putExtras(data);
 
         PendingIntent pi = PendingIntent.getActivity( this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT );
-        builder.setContentIntent( pi );
+        builder.setContentIntent(pi);
 
 
-        // BIG CONTENT
-            NotificationCompat.BigTextStyle bigText = new NotificationCompat.BigTextStyle();
-            bigText.bigText( data.getString("userFrom_nickname") + ": " + data.getString("message") );
-            builder.setStyle(bigText);
+        if( messages != null
+                && messages.size() == 1 ){
+            // BIG CONTENT
+                NotificationCompat.BigTextStyle bigText = new NotificationCompat.BigTextStyle();
+                bigText.bigText(data.getString("userFrom_nickname") + ": " + data.getString("message"));
+                builder.setStyle(bigText);
+        }
+        else if( messages != null ){
 
-        builder.setPriority(NotificationCompat.PRIORITY_HIGH);
-        builder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+            // INPUT STYLE
+                NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
+                inboxStyle.setSummaryText(userNickname);
+                int number = Integer.parseInt( data.getString("userTo_amount_new_messages") );
 
-        builder.setVibrate(new long[]{1000, 1000, 1000, 1000, 1000});
+                for( int i = 0, tamI = messages.size(); i < tamI; i++ ){
 
-        Uri uri = RingtoneManager.getDefaultUri( RingtoneManager.TYPE_NOTIFICATION );
-        builder.setSound(uri);
+                    String messsage = messages.get( i ).getUserFrom().getNickname() + ": " + messages.get( i ).getMessage();
+                    int size = messsage.indexOf(":");
+                    Spannable sb = new SpannableString( messsage );
+
+                    sb.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, size, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    inboxStyle.addLine(sb);
+                }
+                inboxStyle.setBigContentTitle( number + " novas mensagens" );
+                builder.setNumber(number);
+                builder.setStyle(inboxStyle);
+
+            builder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+
+            // WHEN TO MAKE SOME NOISE
+            if( data.getParcelable(Message.MESSAGE_KEY) != null ){
+                Message m = data.getParcelable(Message.MESSAGE_KEY);
+
+                if( m.getUserTo() != null
+                        && ( m.getUserTo().getNotificationConf().getStatus() == 0
+                        || m.getUserTo().getNotificationConf().getTime() < System.currentTimeMillis() ) ){
+
+                    Pref.savePrefKeyValue(getApplicationContext(),
+                            Pref.PREF_KEY_NOTIFICATION_STATUS + "_" + m.getUserFrom(),
+                            String.valueOf( 0 ));
+
+                    AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+
+                    if( am.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE ){
+                        builder.setVibrate(new long[]{1000, 1000, 1000, 1000, 1000});
+
+                        builder.setPriority(NotificationCompat.PRIORITY_HIGH);
+                    }
+                    else if( am.getRingerMode() == AudioManager.RINGER_MODE_NORMAL ){
+                        Uri uri = RingtoneManager.getDefaultUri( RingtoneManager.TYPE_NOTIFICATION );
+                        builder.setSound(uri);
+
+                        builder.setPriority(NotificationCompat.PRIORITY_HIGH);
+                    }
+                }
+            }
+        }
 
         NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        nm.notify( id, builder.build() );
+        nm.notify(id, builder.build());
     }
 
 

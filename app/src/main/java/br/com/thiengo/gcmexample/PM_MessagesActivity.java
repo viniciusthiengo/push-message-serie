@@ -1,7 +1,7 @@
 package br.com.thiengo.gcmexample;
 
 import android.os.Bundle;
-import android.support.design.widget.CoordinatorLayout;
+import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -12,7 +12,6 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -22,6 +21,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 import br.com.thiengo.gcmexample.adapter.MessageAdapter;
 import br.com.thiengo.gcmexample.domain.Message;
@@ -36,14 +36,16 @@ import de.greenrobot.event.EventBus;
 public class PM_MessagesActivity extends AppCompatActivity implements Transaction, View.OnClickListener {
     public static final String TAG = "LOG";
     public static final String LIST_KEY = "br.com.thiengo.gcmexample.PM_MessagesActivity.LIST_KEY";
-    public static final String IS_FROM_NOTIFICATION_KEY = "br.com.thiengo.gcmexample.PM_MessagesActivity.IS_FROM_NOTIFICATION_KEY";
+    //public static final String IS_FROM_NOTIFICATION_KEY = "br.com.thiengo.gcmexample.PM_MessagesActivity.IS_FROM_NOTIFICATION_KEY";
     public static final int NEW_MESSAGE_CODE = 9986; // ANY INT
+    public static final int MESSAGE_WAS_READ_CODE = 9987; // ANY INT
+    public static final int MESSAGE_REMOVED_CODE = 9988; // ANY INT
     public static boolean IS_ON_TOP;
 
     private RecyclerView mRecyclerView;
     private ArrayList<Message> mList;
-    private CoordinatorLayout clContainer;
-    private ProgressBar mPbLoad;
+    //private CoordinatorLayout clContainer;
+    //private ProgressBar mPbLoad;
     private FrameLayout mFlPbLoad;
     private EditText etMessage;
     private ImageButton btSendMessage;
@@ -52,6 +54,7 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
     private User mUserFrom;
     private User mUserTo;
     private String mMethod;
+    protected boolean mIsLastItem;
     //private boolean isFromNotification;
 
 
@@ -71,27 +74,11 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
                 mUserFrom = getIntent().getExtras().getParcelable(User.USER_KEY);
                 mUserTo = getIntent().getExtras().getParcelable(User.USER_TO_KEY);
             }
-            /*else if( getIntent() != null
-                    && getIntent().getExtras() != null
-                    && getIntent().getExtras().getParcelable(Message.MESSAGE_KEY) != null ){
-
-                Message m = getIntent().getExtras().getParcelable(Message.MESSAGE_KEY);
-
-                long id = Long.parseLong( PM_LoginActivity
-                        .retrievePrefKeyValue(getApplicationContext(),
-                                PM_LoginActivity.PREF_KEY_ID,
-                                "0") ) ;
-
-                mUserFrom = m.getUserFrom().getId() == id ? m.getUserFrom() : m.getUserTo();
-                mUserTo = m.getUserFrom().getId() == id ? m.getUserTo() : m.getUserFrom();
-                //isFromNotification = true;
-            }*/
             else{
                 finish();
             }
 
-
-        clContainer = (CoordinatorLayout) findViewById(R.id.cl_container);
+        //clContainer = (CoordinatorLayout) findViewById(R.id.cl_container);
 
         Toolbar mToolbar = (Toolbar) findViewById(R.id.tb_main);
         mToolbar.setTitle(mUserTo.getNickname());
@@ -119,7 +106,7 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
                 mList = new ArrayList<>();
 
                 // CONNECTION - GET MESSAGES
-                    mMethod = "get-messages";
+                    mMethod = Message.METHOD_GET;
                     NetworkConnection.getInstance(this).execute(this, PM_MessagesActivity.class.getName());
             }
 
@@ -141,13 +128,35 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
             mRecyclerView.setLayoutManager(llm);
 
             MessageAdapter mAdapter = new MessageAdapter(this, mList, mUserFrom);
-        mRecyclerView.setAdapter(mAdapter);
+            mRecyclerView.setAdapter(mAdapter);
+
+            mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                    super.onScrollStateChanged(recyclerView, newState);
+                }
+
+                @Override
+                public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                    super.onScrolled(recyclerView, dx, dy);
+
+                    LinearLayoutManager llm = (LinearLayoutManager) mRecyclerView.getLayoutManager();
+
+                    if (!mIsLastItem
+                            && mList.size() == llm.findLastCompletelyVisibleItemPosition() + 1) {
+
+                        mMethod = Message.METHOD_LOAD_OLD;
+                        NetworkConnection
+                                .getInstance(PM_MessagesActivity.this)
+                                .execute(PM_MessagesActivity.this, PM_MessagesActivity.class.getName());
+                    }
+                }
+            });
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         outState.putParcelableArrayList(LIST_KEY, mList);
-        //outState.putBoolean(IS_FROM_NOTIFICATION_KEY, isFromNotification);
         super.onSaveInstanceState(outState);
     }
 
@@ -155,6 +164,7 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
     protected void onResume() {
         super.onResume();
         IS_ON_TOP = true;
+        runClock();
     }
 
     @Override
@@ -172,22 +182,73 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
     }
 
 
-    // MENU
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_pm__messages, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-
-        if(id == android.R.id.home){
-            finish();
+    // UTIL
+        private int getItemListPosition(ArrayList<Message> l, Message m){
+            for( int i = 0, tamI = l.size(); i < tamI; i++ ){
+                if( l.get(i).getId() == m.getId() ){
+                    return( i );
+                }
+            }
+            return( -1 );
         }
-        return true;
-    }
+
+        private void callUpdateMessageWasRead( LinkedList<Message> messages ){
+            // ONLY NOT READ MESSAGE - SIMULATION ACK SCRIPT
+            if( !messages.isEmpty() ){
+                WrapObjToNetwork won = new WrapObjToNetwork( messages, "update-messages-read" );
+
+                NetworkConnection
+                        .getInstance(getApplicationContext())
+                        .execute(won, PM_UsersActivity.class.getName());
+            }
+        }
+
+        private void runClock(){
+            new Thread(){
+                @Override
+                public void run() {
+                    if( IS_ON_TOP ){
+                        SystemClock.sleep(60000);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                if( mRecyclerView != null ){
+                                    mRecyclerView.getAdapter().notifyDataSetChanged();
+                                    runClock();
+                                }
+                            }
+                        });
+                    }
+                }
+            }.start();
+        }
+
+        public void removeMessage( Message m ){
+
+            NetworkConnection
+                    .getInstance(getApplicationContext())
+                    .execute(
+                            new WrapObjToNetwork(m, Message.METHOD_REMOVE),
+                            PM_UsersActivity.class.getName());
+        }
+
+
+    // MENU
+        @Override
+        public boolean onCreateOptionsMenu(Menu menu) {
+            getMenuInflater().inflate(R.menu.menu_pm__messages, menu);
+            return true;
+        }
+
+        @Override
+        public boolean onOptionsItemSelected(MenuItem item) {
+            int id = item.getItemId();
+
+            if(id == android.R.id.home){
+                finish();
+            }
+            return true;
+        }
 
 
     // LISTENERS
@@ -215,6 +276,49 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
                                 mRecyclerView.smoothScrollToPosition(0);
 
                                 tvEmptyList.setVisibility(View.GONE);
+
+                                // UPDATE WAS READ IN SERVER TOO
+                                    if( m.getUserTo().getId() == mUserFrom.getId() ){
+                                        LinkedList<Message> l = new LinkedList<>();
+                                        l.add(m);
+                                        callUpdateMessageWasRead(l);
+                                    }
+                            }
+                        }
+                        else if (pushMessage.getCode() == MESSAGE_WAS_READ_CODE
+                                && pushMessage.getBundle() != null
+                                && pushMessage.getBundle().getParcelable(Message.MESSAGE_KEY) != null) {
+
+                            Message m = pushMessage.getBundle().getParcelable(Message.MESSAGE_KEY);
+                            int position = getItemListPosition(mList, m);
+
+                            if( m.getUserTo().getId() == mUserTo.getId()
+                                    && position > -1 ){
+
+                                mList.get( position ).setWasRead(1);
+
+                                MessageAdapter adapter = (MessageAdapter) mRecyclerView.getAdapter();
+                                adapter.notifyItemChanged( position );
+                            }
+                        }
+                        else if (pushMessage.getCode() == MESSAGE_REMOVED_CODE
+                                && pushMessage.getBundle() != null
+                                && pushMessage.getBundle().getParcelable(Message.MESSAGE_KEY) != null) {
+
+                            Message m = pushMessage.getBundle().getParcelable(Message.MESSAGE_KEY);
+
+                            if( (m.getUserFrom().getId() == mUserFrom.getId()
+                                    && m.getUserTo().getId() == mUserTo.getId())
+                                    || (m.getUserFrom().getId() == mUserTo.getId()
+                                    && m.getUserTo().getId() == mUserFrom.getId()) ){
+
+                                int position = getItemListPosition(mList, m);
+
+                                if( position > -1 ){
+                                    MessageAdapter adapter = (MessageAdapter) mRecyclerView.getAdapter();
+                                    adapter.removeListItem( position );
+                                }
+
                             }
                         }
                     }
@@ -229,7 +333,7 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
                 btSendMessage.setEnabled(false);
 
                 // CONNETION - GET MESSAGES
-                    mMethod = "save-message";
+                    mMethod = Message.METHOD_SAVE;
                     NetworkConnection.getInstance(this).execute( this, PM_MessagesActivity.class.getName() );
             }
         }
@@ -241,10 +345,17 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
             mFlPbLoad.setVisibility(View.VISIBLE);
 
             if( Util.verifyConnection(this) ){
-                Message message = new Message();
-                message.setMessage( etMessage.getText().toString() );
-                message.setUserFrom(mUserFrom);
-                message.setUserTo(mUserTo);
+                Message message;
+
+                if( !mMethod.equalsIgnoreCase( Message.METHOD_LOAD_OLD ) ){
+                    message = new Message();
+                    message.setMessage( etMessage.getText().toString() );
+                    message.setUserFrom(mUserFrom);
+                    message.setUserTo(mUserTo);
+                }
+                else{
+                    message = mList.get( mList.size() - 1 );
+                }
 
                 return( new WrapObjToNetwork( message, mMethod ) );
             }
@@ -263,14 +374,26 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
 
                 try{
                     if( !jsonObject.isNull("messages") ){
+                        LinkedList<Message> listNotRead = new LinkedList<>();
                         JSONArray jsonArray = jsonObject.getJSONArray("messages");
 
                         for(int i = 0, tamI = jsonArray.length(); i < tamI; i++){
                             Message m = gson.fromJson( jsonArray.getJSONObject( i ).toString(), Message.class );
-                            m.setRegTime( m.getRegTime() * 1000 ); // IN MILLISECONDS
+                            m.setRegTime(m.getRegTime() * 1000); // IN MILLISECONDS
+
+                            if( m.getUserTo().getId() == mUserFrom.getId()
+                                    && m.getWasRead() == 0 ){
+                                listNotRead.add(m);
+                            }
 
                             adapter.addListItem(m, mList.size() );
                         }
+
+                        if( jsonArray.length() == 0 ){ // AVOID TO KEEP LOADING
+                            mIsLastItem = true;
+                        }
+
+                        callUpdateMessageWasRead( listNotRead );
                     }
                     else {
                         boolean status = jsonObject.getBoolean("result");

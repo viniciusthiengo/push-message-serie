@@ -1,10 +1,7 @@
 package br.com.thiengo.gcmexample;
 
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -13,12 +10,10 @@ import android.widget.EditText;
 
 import br.com.thiengo.gcmexample.domain.Message;
 import br.com.thiengo.gcmexample.domain.User;
+import br.com.thiengo.gcmexample.extra.Pref;
 
 public class PM_LoginActivity extends AppCompatActivity implements View.OnClickListener {
     public static final String TAG = "LOG";
-    public static final String PREF_KEY_NICKNAME = "br.com.thiengo.gcmexample.Key.Nickname";
-    public static final String PREF_KEY_ID = "br.com.thiengo.gcmexample.Key.Id";
-
 
     private TextInputLayout tilLogin;
     private EditText etLogin;
@@ -45,9 +40,9 @@ public class PM_LoginActivity extends AppCompatActivity implements View.OnClickL
         super.onStart();
 
         // IF USER ALREADY REGISTERED HIS NICKNAME, SO THE SCRIPT KEEP GOING DIRECTLY TO USERS ACTIVITY
-            mUser.setId( Long.parseLong(retrievePrefKeyValue(getApplicationContext(), PREF_KEY_ID, "0")) );
+            mUser.setId( Long.parseLong( Pref.retrievePrefKeyValue( getApplicationContext(), Pref.PREF_KEY_ID, "0" ) ) );
             if( mUser.getId() > 0 ){
-                mUser.setNickname(retrievePrefKeyValue(getApplicationContext(), PREF_KEY_NICKNAME));
+                mUser.setNickname( Pref.retrievePrefKeyValue(getApplicationContext(), Pref.PREF_KEY_NICKNAME ));
 
                 callNextActivity( 0 );
             }
@@ -76,23 +71,6 @@ public class PM_LoginActivity extends AppCompatActivity implements View.OnClickL
     }
 
 
-
-    // SHARED PREFERENCES
-        public static void savePrefKeyValue( Context context, String key, String value ){
-            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences( context );
-            SharedPreferences.Editor e = sp.edit();
-            e.putString( key, value );
-            e.apply();
-        }
-        public static String retrievePrefKeyValue( Context context, String key, String... defaultValue ){
-            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences( context );
-            String dValue = defaultValue != null && defaultValue.length > 0 ? defaultValue[0] : "";
-            sp.getString(key, dValue );
-            return( sp.getString( key, dValue ) );
-        }
-
-
-
     // LISTENERS
         @Override
         public void onClick(View v) {
@@ -106,7 +84,9 @@ public class PM_LoginActivity extends AppCompatActivity implements View.OnClickL
 
             // IF NO ERROR BEING SHOWN, JUST GO TO USERS ACTIVTY
                 if( !tilLogin.isErrorEnabled() ){
-                    savePrefKeyValue( getApplicationContext(), PREF_KEY_NICKNAME, mUser.getNickname());
+                    Pref.savePrefKeyValue( getApplicationContext(),
+                            Pref.PREF_KEY_NICKNAME,
+                            mUser.getNickname());
                     callNextActivity( 1 );
                 }
         }

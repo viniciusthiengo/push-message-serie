@@ -7,6 +7,9 @@ import android.os.Parcelable;
  * Created by viniciusthiengo on 8/10/15.
  */
 public class User implements Parcelable {
+
+    public static final String METHOD_SAVE_USER = "save-user";
+
     public static final String USER_KEY = "br.com.thiengo.gcmexample.domain.User.USER_KEY";
     public static final String USER_TO_KEY = "br.com.thiengo.gcmexample.domain.User.USER_TO_KEY";
     public static final String ID_KEY = "br.com.thiengo.gcmexample.domain.User.ID_KEY";
@@ -18,6 +21,7 @@ public class User implements Parcelable {
     private String nickname;
     private int numberNewMessages;
     private boolean isTyping;
+    private NotificationConf notificationConf;
 
 
     public User() {}
@@ -72,6 +76,14 @@ public class User implements Parcelable {
         this.numberNewMessages = numberNewMessages;
     }
 
+    public NotificationConf getNotificationConf() {
+        return notificationConf;
+    }
+
+    public void setNotificationConf(NotificationConf notificationConf) {
+        this.notificationConf = notificationConf;
+    }
+
 
     @Override
     public int describeContents() {
@@ -85,6 +97,7 @@ public class User implements Parcelable {
         dest.writeString(this.nickname);
         dest.writeInt(this.numberNewMessages);
         dest.writeByte(isTyping ? (byte) 1 : (byte) 0);
+        dest.writeParcelable(this.notificationConf, 0);
     }
 
     protected User(Parcel in) {
@@ -93,6 +106,7 @@ public class User implements Parcelable {
         this.nickname = in.readString();
         this.numberNewMessages = in.readInt();
         this.isTyping = in.readByte() != 0;
+        this.notificationConf = in.readParcelable(NotificationConf.class.getClassLoader());
     }
 
     public static final Creator<User> CREATOR = new Creator<User>() {

@@ -17,9 +17,11 @@ import org.json.JSONObject;
 import java.util.HashMap;
 
 import br.com.thiengo.gcmexample.PM_UsersActivity;
+import br.com.thiengo.gcmexample.domain.NotificationConf;
 import br.com.thiengo.gcmexample.domain.PushMessage;
 import br.com.thiengo.gcmexample.domain.User;
 import br.com.thiengo.gcmexample.domain.WrapObjToNetwork;
+import br.com.thiengo.gcmexample.extra.Pref;
 import de.greenrobot.event.EventBus;
 
 /**
@@ -89,9 +91,44 @@ public class NetworkConnection {
 
                         if( mTransaction != null ){
                             mTransaction.doAfter( response );
+                            mTransaction = null;
                         }
                         else{
-                            // WHEN USER CONNECTS IN FIRST TIME
+
+                            Bundle bundle = new Bundle();
+                            PushMessage pushMessage = new PushMessage();
+                            pushMessage.setBundle(bundle);
+                            pushMessage.setListenerLabel(PM_UsersActivity.class.getName());
+
+                            // WHEN UPDATE NOTIFICATION CONF
+                            if( obj.getMethod().equalsIgnoreCase( NotificationConf.METHOD_UPDATE ) ){
+                                User u = new User();
+                                u.setId( obj.getUserFrom().getId() );
+                                u.setNotificationConf( new NotificationConf() );
+
+                                try {
+                                    u.getNotificationConf()
+                                        .setStatus(
+                                                Integer.parseInt(Pref.retrievePrefKeyValue(mContext.getApplicationContext(),
+                                                        Pref.PREF_KEY_NOTIFICATION_STATUS_OLD + "_" + obj.getUserFrom().getId(),
+                                                        String.valueOf(0)))
+                                        );
+
+                                    if( response.getBoolean("result") ){
+                                        u.getNotificationConf()
+                                                .setStatus( obj.getUserFrom().getNotificationConf().getStatus() );
+                                    }
+
+                                    bundle.putParcelable(User.USER_KEY, u);
+                                    pushMessage.setCode(PM_UsersActivity.USER_NOTIFICATION_CONF_UPDATED_CODE);
+
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
+                            // WHEN FIRST TIME
+                            else if( obj.getMethod().equalsIgnoreCase( User.METHOD_SAVE_USER ) ) {
                                 long id;
                                 try {
                                     id = response.getLong("id");
@@ -101,17 +138,12 @@ public class NetworkConnection {
                                     id = 0;
                                 }
 
-                                Log.i(TAG, "NetworkConnection:ID = "+id);
-
-                                Bundle bundle = new Bundle();
                                 bundle.putLong(User.ID_KEY, id);
+                                pushMessage.setCode(PM_UsersActivity.USER_DATA_CODE);
+                            }
 
-                                PushMessage pushMessage = new PushMessage();
-                                pushMessage.setBundle(bundle);
-                                pushMessage.setListenerLabel( PM_UsersActivity.class.getName() );
-                                pushMessage.setCode( PM_UsersActivity.USER_DATA_CODE );
-
-                                EventBus.getDefault().post( pushMessage );
+                            // SEND DATA TO ACTIVITY
+                            EventBus.getDefault().post( pushMessage );
                         }
                     }
                 },

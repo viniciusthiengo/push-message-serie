@@ -3,9 +3,9 @@
     android:layout_width="wrap_content"
     android:layout_height="match_parent"
     android:layout_gravity="right"
+    android:layout_marginLeft="50dp"
     android:background="@android:color/white"
-    android:padding="8dp"
-    android:layout_marginLeft="50dp">
+    android:padding="8dp">
 
 
     <TextView
@@ -50,5 +50,38 @@
 
 
     </LinearLayout>
+
+    <!-- RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/tv_nickname_right"
+        android:layout_marginTop="2dp"
+        android:background="@color/blue"
+        android:padding="5dp">
+
+        <TextView
+            android:id="@+id/tv_time_right"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginRight="8dp"
+            android:maxLines="1"
+            android:textColor="@android:color/white"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tv_message_right"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignRight="@+id/tv_time_right"
+            android:layout_below="@+id/tv_time_right"
+            android:paddingTop="9dp"
+            android:textColor="@color/colorPrimarytext"
+            android:textIsSelectable="true"
+            android:textSize="14sp" />
+
+    </RelativeLayout -->
 
 </RelativeLayout>

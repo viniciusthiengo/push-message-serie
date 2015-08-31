@@ -122,12 +122,7 @@
         <activity
             android:theme="@style/Theme.Default"
             android:name=".PM_MessagesActivity"
-            android:label="@string/title_activity_pm__messages"
-            android:parentActivityName=".PM_UsersActivity">
-
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="br.com.thiengo.gcmexample.PM_UsersActivity" />
+            android:label="@string/title_activity_pm__messages">
         </activity>
 
         <activity

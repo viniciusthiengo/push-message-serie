@@ -3,6 +3,7 @@ package br.com.thiengo.gcmexample;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -29,9 +30,11 @@ import java.util.ArrayList;
 
 import br.com.thiengo.gcmexample.adapter.UserAdapter;
 import br.com.thiengo.gcmexample.domain.Message;
+import br.com.thiengo.gcmexample.domain.NotificationConf;
 import br.com.thiengo.gcmexample.domain.PushMessage;
 import br.com.thiengo.gcmexample.domain.User;
 import br.com.thiengo.gcmexample.domain.WrapObjToNetwork;
+import br.com.thiengo.gcmexample.extra.Pref;
 import br.com.thiengo.gcmexample.extra.Util;
 import br.com.thiengo.gcmexample.network.NetworkConnection;
 import br.com.thiengo.gcmexample.network.Transaction;
@@ -42,6 +45,7 @@ public class PM_UsersActivity extends AppCompatActivity implements Transaction {
     public static final String TAG = "LOG";
     public static final String LIST_KEY = "br.com.thiengo.gcmexample.PM_UsersActivity.LIST_KEY";
     public static final int USER_DATA_CODE = 6892; // ANY INT
+    public static final int USER_NOTIFICATION_CONF_UPDATED_CODE = 6893; // ANY INT
     public static boolean IS_ON_TOP;
 
     private RecyclerView mRecyclerView;
@@ -71,10 +75,9 @@ public class PM_UsersActivity extends AppCompatActivity implements Transaction {
 
                 Message m = getIntent().getExtras().getParcelable(Message.MESSAGE_KEY);
 
-                long id = Long.parseLong( PM_LoginActivity
-                            .retrievePrefKeyValue(getApplicationContext(),
-                                    PM_LoginActivity.PREF_KEY_ID,
-                                    "0") ) ;
+                long id = Long.parseLong( Pref.retrievePrefKeyValue(getApplicationContext(),
+                        Pref.PREF_KEY_ID,
+                        "0") ) ;
 
                 mUser = m.getUserFrom().getId() == id ? m.getUserFrom() : m.getUserTo();
                 User mUserTo = m.getUserFrom().getId() == id ? m.getUserTo() : m.getUserFrom();
@@ -83,15 +86,21 @@ public class PM_UsersActivity extends AppCompatActivity implements Transaction {
                 bundle.putParcelable(User.USER_KEY, mUser);
                 bundle.putParcelable(User.USER_TO_KEY, mUserTo );
 
-                Intent intent = new Intent(this, PM_MessagesActivity.class);
-                intent.putExtras(bundle);
+                ArrayList<Message> messages = getIntent().getExtras().getParcelableArrayList(Message.MESSAGES_SUMMARY_KEY);
 
-                startActivity( intent );
+                // CALL MESSAGE ACTIVITY ONLY IF IT HAS JUST ONE MESSAGE
+                if( messages == null
+                        || messages.size() == 1 ){
+
+                    Intent intent = new Intent(this, PM_MessagesActivity.class);
+                    intent.putExtras(bundle);
+                    startActivity( intent );
+                }
             }
             else{
 
-                PM_LoginActivity.savePrefKeyValue(getApplicationContext(), PM_LoginActivity.PREF_KEY_NICKNAME, "");
-                PM_LoginActivity.savePrefKeyValue(getApplicationContext(), PM_LoginActivity.PREF_KEY_ID, "0");
+                Pref.savePrefKeyValue(getApplicationContext(), Pref.PREF_KEY_NICKNAME, "");
+                Pref.savePrefKeyValue(getApplicationContext(), Pref.PREF_KEY_ID, "0");
 
                 Intent intent = new Intent( this, PM_LoginActivity.class );
                 startActivity(intent);
@@ -132,11 +141,7 @@ public class PM_UsersActivity extends AppCompatActivity implements Transaction {
 
         // VERIFY AND GENERATE REGID
             if( checkPlayServices() ){
-                //Bundle bundle = new Bundle();
-                //bundle.putParcelable(User.USER_KEY, mUser);
-
                 Intent it = new Intent(this, RegistrationIntentService.class);
-                //it.putExtras( bundle );
 
                 startService(it);
             }
@@ -201,29 +206,56 @@ public class PM_UsersActivity extends AppCompatActivity implements Transaction {
         }
     }
 
-    private int getItemListPosition(ArrayList<User> l, User u){
-        for( int i = 0, tamI = l.size(); i < tamI; i++ ){
-            if( l.get(i).getId() == u.getId() ){
-                return( i );
-            }
-        }
-        return( -1 );
-    }
 
-    private boolean checkPlayServices() {
-        int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
-        if (resultCode != ConnectionResult.SUCCESS) {
-            if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
-                GooglePlayServicesUtil.getErrorDialog(resultCode, this,
-                        PLAY_SERVICES_RESOLUTION_REQUEST).show();
-            } else {
-                Log.i("LOG", "This device is not supported.");
-                finish();
+    // UTIL
+        private int getItemListPosition(ArrayList<User> l, User u){
+            for( int i = 0, tamI = l.size(); i < tamI; i++ ){
+                if( l.get(i).getId() == u.getId() ){
+                    return( i );
+                }
             }
-            return false;
+            return( -1 );
         }
-        return true;
-    }
+
+        private boolean checkPlayServices() {
+            int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
+            if (resultCode != ConnectionResult.SUCCESS) {
+                if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
+                    GooglePlayServicesUtil.getErrorDialog(resultCode, this,
+                            PLAY_SERVICES_RESOLUTION_REQUEST).show();
+                } else {
+                    Log.i("LOG", "This device is not supported.");
+                    finish();
+                }
+                return false;
+            }
+            return true;
+        }
+
+        public void sendConfigNotification( User userFrom ){
+
+            int statusNotification = Integer.parseInt( Pref.retrievePrefKeyValue(getApplicationContext(),
+                    Pref.PREF_KEY_NOTIFICATION_STATUS + "_" + userFrom.getId(),
+                    "0") );
+
+            if( statusNotification != userFrom.getNotificationConf().getStatus() ){
+
+                // SP - UPDATE NOTIFICATION DATA
+                    Pref.savePrefKeyValue(getApplicationContext(),
+                        Pref.PREF_KEY_NOTIFICATION_STATUS + "_" + userFrom.getId(),
+                        String.valueOf( userFrom.getNotificationConf().getStatus() ));
+
+                    Pref.savePrefKeyValue(getApplicationContext(),
+                        Pref.PREF_KEY_NOTIFICATION_STATUS_OLD + "_" + userFrom.getId(),
+                        String.valueOf( statusNotification ));
+
+                NetworkConnection
+                        .getInstance(getApplicationContext())
+                        .execute(
+                                new WrapObjToNetwork(mUser, userFrom, NotificationConf.METHOD_UPDATE),
+                                PM_UsersActivity.class.getName());
+            }
+        }
 
 
     // MENU
@@ -248,6 +280,15 @@ public class PM_UsersActivity extends AppCompatActivity implements Transaction {
                 startActivityForResult(intent, PM_NicknameActivity.CODE);
                 return true;
             }
+            else if( id == R.id.action_logout ){
+                Pref.savePrefKeyValue(getApplicationContext(), Pref.PREF_KEY_ID, "0");
+
+                Intent intent = new Intent( this, PM_LoginActivity.class );
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+
+                finish();
+            }
 
             return super.onOptionsItemSelected(item);
         }
@@ -269,10 +310,10 @@ public class PM_UsersActivity extends AppCompatActivity implements Transaction {
                                 mUser.setId(pushMessage.getBundle().getLong(User.ID_KEY));
 
                                 // SAVING ID ON PREFERENCES
-                                    PM_LoginActivity.savePrefKeyValue(
-                                            getApplicationContext(),
-                                            PM_LoginActivity.PREF_KEY_ID,
-                                            String.valueOf(mUser.getId()) );
+                                    Pref.savePrefKeyValue(
+                                        getApplicationContext(),
+                                        Pref.PREF_KEY_ID,
+                                        String.valueOf(mUser.getId()) );
 
                                 NetworkConnection.getInstance( PM_UsersActivity.this )
                                         .execute(PM_UsersActivity.this,
@@ -309,7 +350,25 @@ public class PM_UsersActivity extends AppCompatActivity implements Transaction {
                                 adapter.addListItem(m.getUserFrom(), 0 );
                             }
                         }
+                        else if( pushMessage.getCode() == PM_UsersActivity.USER_NOTIFICATION_CONF_UPDATED_CODE ){
 
+                            User userFrom = pushMessage.getBundle().getParcelable(User.USER_KEY);
+                            User u = mList.get(getItemListPosition(mList, userFrom));
+
+                            if( userFrom != null
+                                    && userFrom.getNotificationConf().getStatus() != u.getNotificationConf().getStatus() ){
+
+                                u.getNotificationConf().setStatus( userFrom.getNotificationConf().getStatus() );
+
+                                Pref.savePrefKeyValue(getApplicationContext(),
+                                        Pref.PREF_KEY_NOTIFICATION_STATUS + "_" + u.getId(),
+                                        String.valueOf( userFrom.getNotificationConf().getStatus() ));
+
+                                Snackbar.make( clContainer,
+                                        "Atualização notificações de \""+u.getNickname()+"\" falhou, tente novamente",
+                                        Snackbar.LENGTH_LONG ).show();
+                            }
+                        }
                     }
                 }
             });
