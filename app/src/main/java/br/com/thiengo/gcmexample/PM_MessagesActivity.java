@@ -1,11 +1,13 @@
 package br.com.thiengo.gcmexample;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -15,15 +17,18 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.gson.Gson;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
 import br.com.thiengo.gcmexample.adapter.MessageAdapter;
+import br.com.thiengo.gcmexample.conf.Configuration;
 import br.com.thiengo.gcmexample.domain.Message;
 import br.com.thiengo.gcmexample.domain.PushMessage;
 import br.com.thiengo.gcmexample.domain.User;
@@ -57,6 +62,8 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
     protected boolean mIsLastItem;
     //private boolean isFromNotification;
 
+    private GoogleCloudMessaging gcm;
+
 
 
     @Override
@@ -71,8 +78,10 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
                     && getIntent().getExtras().getParcelable(User.USER_KEY) != null
                     && getIntent().getExtras().getParcelable(User.USER_TO_KEY) != null){
 
-                mUserFrom = getIntent().getExtras().getParcelable(User.USER_KEY);
-                mUserTo = getIntent().getExtras().getParcelable(User.USER_TO_KEY);
+                if( mUserFrom == null ){
+                    mUserFrom = getIntent().getExtras().getParcelable(User.USER_KEY);
+                    mUserTo = getIntent().getExtras().getParcelable(User.USER_TO_KEY);
+                }
             }
             else{
                 finish();
@@ -118,6 +127,13 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
     @Override
     protected void onStart() {
         super.onStart();
+
+
+        // GOOGLE CLOUD CONNECTION
+            if( gcm == null ){
+                gcm = GoogleCloudMessaging.getInstance(this);
+            }
+
 
         // RECYCLER VIEW CONF
             mRecyclerView.setHasFixedSize(true);
@@ -177,6 +193,10 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
     public void onStop() {
         super.onStop();
 
+        if( gcm != null ){
+            gcm.close();
+        }
+
         // STOP CONNECTION
             NetworkConnection.getInstance(this).getRequestQueue().cancelAll(PM_MessagesActivity.class.getName());
     }
@@ -196,10 +216,15 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
             // ONLY NOT READ MESSAGE - SIMULATION ACK SCRIPT
             if( !messages.isEmpty() ){
                 WrapObjToNetwork won = new WrapObjToNetwork( messages, "update-messages-read" );
-
-                NetworkConnection
+                /*NetworkConnection
                         .getInstance(getApplicationContext())
-                        .execute(won, PM_UsersActivity.class.getName());
+                        .execute(won, PM_UsersActivity.class.getName());*/
+
+                Gson gson = new Gson();
+                Bundle bundle = new Bundle();
+                bundle.putString("jsonObject", gson.toJson(won));
+
+                sendMessage(gcm, bundle);
             }
         }
 
@@ -278,11 +303,11 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
                                 tvEmptyList.setVisibility(View.GONE);
 
                                 // UPDATE WAS READ IN SERVER TOO
-                                    if( m.getUserTo().getId() == mUserFrom.getId() ){
+                                    /*if( m.getUserTo().getId() == mUserFrom.getId() ){
                                         LinkedList<Message> l = new LinkedList<>();
                                         l.add(m);
                                         callUpdateMessageWasRead(l);
-                                    }
+                                    }*/
                             }
                         }
                         else if (pushMessage.getCode() == MESSAGE_WAS_READ_CODE
@@ -329,12 +354,24 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
         @Override
         public void onClick(View v) {
             if( !etMessage.getText().toString().trim().isEmpty() ){
-                etMessage.setEnabled(false);
-                btSendMessage.setEnabled(false);
+                /*etMessage.setEnabled(false);
+                btSendMessage.setEnabled(false);*/
 
-                // CONNETION - GET MESSAGES
+                /*// CONNETION - GET MESSAGES
                     mMethod = Message.METHOD_SAVE;
-                    NetworkConnection.getInstance(this).execute( this, PM_MessagesActivity.class.getName() );
+                    NetworkConnection.getInstance(this).execute( this, PM_MessagesActivity.class.getName() );*/
+
+                mMethod = Message.METHOD_SAVE;
+
+                WrapObjToNetwork wrapObjToNetwork = doBefore();
+                Gson gson = new Gson();
+                Bundle bundle = new Bundle();
+                bundle.putString("jsonObject", gson.toJson( wrapObjToNetwork ));
+
+                Log.i(TAG, "USER FROM: " + wrapObjToNetwork.getMessage().getUserFrom().getId());
+                Log.i(TAG, "USER: " + wrapObjToNetwork.getMessage().getUserTo().getId());
+
+                sendMessage( gcm, bundle );
             }
         }
 
@@ -381,6 +418,8 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
                             Message m = gson.fromJson( jsonArray.getJSONObject( i ).toString(), Message.class );
                             m.setRegTime(m.getRegTime() * 1000); // IN MILLISECONDS
 
+                            Log.i(TAG, "--> "+m.getAckId());
+
                             if( m.getUserTo().getId() == mUserFrom.getId()
                                     && m.getWasRead() == 0 ){
                                 listNotRead.add(m);
@@ -424,5 +463,51 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
                 else {
                     tvEmptyList.setVisibility(View.GONE);
                 }
+        }
+
+
+    // GCM XMPP SUPPORT
+        private void sendMessage( final GoogleCloudMessaging gcm, final Bundle bundle ){
+
+            new AsyncTask<Void, Void, Integer>() {
+                @Override
+                protected void onPreExecute() {
+                    mFlPbLoad.setVisibility(View.VISIBLE);
+                    etMessage.setEnabled(false);
+                    btSendMessage.setEnabled(false);
+                }
+
+                @Override
+                protected Integer doInBackground(Void... params) {
+                    Integer code;
+                    try {
+                        String id = Integer.toString( (int)(System.currentTimeMillis() / 1000) ); // message unique id
+                        gcm.send( Configuration.SENDER_ID + "@gcm.googleapis.com", id, (60 * 1000), bundle );
+                        //Log.i(TAG, "ID: "+id);
+                        //gcm.send( Configuration.SENDER_ID + "@gcm.googleapis.com", id, bundle );
+                        code = 1;
+                    } catch (IOException ex) {
+                        code = 3;
+                    }
+                    return code;
+                }
+
+                @Override
+                protected void onPostExecute(Integer code) {
+                    mFlPbLoad.setVisibility(View.GONE );
+                    etMessage.setEnabled(true);
+                    btSendMessage.setEnabled(true);
+
+                    if( code == 1 ){
+                        etMessage.setText("");
+                    }
+                    else{
+                        Toast.makeText( PM_MessagesActivity.this, "Falohu, tente novamente", Toast.LENGTH_SHORT ).show();
+                    }
+
+                    Log.i(TAG, "onPostExecute: " + code);
+                    //mDisplay.append(msg + "\n");
+                }
+            }.execute(null, null, null);
         }
 }

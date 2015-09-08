@@ -24,6 +24,7 @@ public class Message implements Parcelable {
     private String message;
     private long regTime;
     private int wasRead;
+    private String ackId;
 
 
     public Message() {}
@@ -82,6 +83,14 @@ public class Message implements Parcelable {
         this.regTime = regTime;
     }
 
+    public String getAckId() {
+        return ackId;
+    }
+
+    public void setAckId(String ackId) {
+        this.ackId = ackId;
+    }
+
     public String getRegTimeForHuman(){
         String aux = "";
         Calendar c = Calendar.getInstance();
@@ -107,20 +116,26 @@ public class Message implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
+        dest.writeLong(this.id);
         dest.writeParcelable(this.userFrom, 0);
         dest.writeParcelable(this.userTo, 0);
         dest.writeString(this.message);
         dest.writeLong(this.regTime);
+        dest.writeInt(this.wasRead);
+        dest.writeString(this.ackId);
     }
 
     protected Message(Parcel in) {
+        this.id = in.readLong();
         this.userFrom = in.readParcelable(User.class.getClassLoader());
         this.userTo = in.readParcelable(User.class.getClassLoader());
         this.message = in.readString();
         this.regTime = in.readLong();
+        this.wasRead = in.readInt();
+        this.ackId = in.readString();
     }
 
-    public static final Parcelable.Creator<Message> CREATOR = new Parcelable.Creator<Message>() {
+    public static final Creator<Message> CREATOR = new Creator<Message>() {
         public Message createFromParcel(Parcel source) {
             return new Message(source);
         }
