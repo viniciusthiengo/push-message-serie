@@ -1,13 +1,11 @@
 package br.com.thiengo.gcmexample;
 
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,12 +21,10 @@ import com.google.gson.Gson;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
 import br.com.thiengo.gcmexample.adapter.MessageAdapter;
-import br.com.thiengo.gcmexample.conf.Configuration;
 import br.com.thiengo.gcmexample.domain.Message;
 import br.com.thiengo.gcmexample.domain.PushMessage;
 import br.com.thiengo.gcmexample.domain.User;
@@ -130,9 +126,9 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
 
 
         // GOOGLE CLOUD CONNECTION
-            if( gcm == null ){
+            /*if( gcm == null ){
                 gcm = GoogleCloudMessaging.getInstance(this);
-            }
+            }*/
 
 
         // RECYCLER VIEW CONF
@@ -193,9 +189,9 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
     public void onStop() {
         super.onStop();
 
-        if( gcm != null ){
+        /*if( gcm != null ){
             gcm.close();
-        }
+        }*/
 
         // STOP CONNECTION
             NetworkConnection.getInstance(this).getRequestQueue().cancelAll(PM_MessagesActivity.class.getName());
@@ -215,16 +211,17 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
         private void callUpdateMessageWasRead( LinkedList<Message> messages ){
             // ONLY NOT READ MESSAGE - SIMULATION ACK SCRIPT
             if( !messages.isEmpty() ){
-                WrapObjToNetwork won = new WrapObjToNetwork( messages, "update-messages-read" );
-                /*NetworkConnection
-                        .getInstance(getApplicationContext())
-                        .execute(won, PM_UsersActivity.class.getName());*/
 
-                Gson gson = new Gson();
+                WrapObjToNetwork won = new WrapObjToNetwork( messages, "update-messages-read" );
+                NetworkConnection
+                        .getInstance(getApplicationContext())
+                        .execute(won, PM_MessagesActivity.class.getName());
+
+                /*Gson gson = new Gson();
                 Bundle bundle = new Bundle();
                 bundle.putString("jsonObject", gson.toJson(won));
 
-                sendMessage(gcm, bundle);
+                sendMessage(gcm, bundle);*/
             }
         }
 
@@ -303,11 +300,11 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
                                 tvEmptyList.setVisibility(View.GONE);
 
                                 // UPDATE WAS READ IN SERVER TOO
-                                    /*if( m.getUserTo().getId() == mUserFrom.getId() ){
+                                    if( m.getUserTo().getId() == mUserFrom.getId() ){
                                         LinkedList<Message> l = new LinkedList<>();
                                         l.add(m);
                                         callUpdateMessageWasRead(l);
-                                    }*/
+                                    }
                             }
                         }
                         else if (pushMessage.getCode() == MESSAGE_WAS_READ_CODE
@@ -354,14 +351,14 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
         @Override
         public void onClick(View v) {
             if( !etMessage.getText().toString().trim().isEmpty() ){
-                /*etMessage.setEnabled(false);
-                btSendMessage.setEnabled(false);*/
+                etMessage.setEnabled(false);
+                btSendMessage.setEnabled(false);
 
-                /*// CONNETION - GET MESSAGES
+                // CONNETION - GET MESSAGES
                     mMethod = Message.METHOD_SAVE;
-                    NetworkConnection.getInstance(this).execute( this, PM_MessagesActivity.class.getName() );*/
+                    NetworkConnection.getInstance(this).execute( this, PM_MessagesActivity.class.getName() );
 
-                mMethod = Message.METHOD_SAVE;
+                /*mMethod = Message.METHOD_SAVE;
 
                 WrapObjToNetwork wrapObjToNetwork = doBefore();
                 Gson gson = new Gson();
@@ -371,7 +368,7 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
                 Log.i(TAG, "USER FROM: " + wrapObjToNetwork.getMessage().getUserFrom().getId());
                 Log.i(TAG, "USER: " + wrapObjToNetwork.getMessage().getUserTo().getId());
 
-                sendMessage( gcm, bundle );
+                sendMessage( gcm, bundle );*/
             }
         }
 
@@ -418,7 +415,7 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
                             Message m = gson.fromJson( jsonArray.getJSONObject( i ).toString(), Message.class );
                             m.setRegTime(m.getRegTime() * 1000); // IN MILLISECONDS
 
-                            Log.i(TAG, "--> "+m.getAckId());
+                            //Log.i(TAG, "--> "+m.getId());
 
                             if( m.getUserTo().getId() == mUserFrom.getId()
                                     && m.getWasRead() == 0 ){
@@ -467,7 +464,7 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
 
 
     // GCM XMPP SUPPORT
-        private void sendMessage( final GoogleCloudMessaging gcm, final Bundle bundle ){
+        /*private void sendMessage( final GoogleCloudMessaging gcm, final Bundle bundle ){
 
             new AsyncTask<Void, Void, Integer>() {
                 @Override
@@ -509,5 +506,5 @@ public class PM_MessagesActivity extends AppCompatActivity implements Transactio
                     //mDisplay.append(msg + "\n");
                 }
             }.execute(null, null, null);
-        }
+        }*/
 }

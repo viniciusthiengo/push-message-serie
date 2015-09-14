@@ -39,8 +39,6 @@ import de.greenrobot.event.EventBus;
 
 
 public class MyGcmListenerService extends GcmListenerService  {
-
-
     public static final String TAG = "LOG";
 
 
