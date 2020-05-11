@@ -4,7 +4,7 @@ Projeto Java Android da série de artigos sobre como utilizar o GCM (Google Clou
 
 A principal proposta dessa série de artigos é a apresentação completa de todo o sistema de notificações Android via API nativa GCM.
 
-Apesar dos inúmeros sistemas de notificações push que têm até mais facilidade de implantação do que o GCM, apesar disso é somente com o GCM que o desenvolvedor tem totoal controle, via código, de "quem" receberá e "quando" a notificação será enviada.
+Apesar dos inúmeros sistemas de notificações push que têm até mais facilidade de implantação do que o GCM, apesar disso é somente com o GCM que o desenvolvedor tem total controle, via código, de "quem" receberá a notificação e "quando" está será enviada.
 
 Todas as aulas, artigos, são também acompanhados de suas versões em vídeo. A primeira aula é a [GCM Downstream Messages. Push Message Android - Parte 1](https://www.thiengo.com.br/gcm-downstream-messages-push-message-android-parte-1).
 
