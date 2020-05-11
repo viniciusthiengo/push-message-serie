@@ -12,6 +12,16 @@ Todas as aulas, artigos, são também acompanhados de suas versões em vídeo. A
 
 <img src="https://www.thiengo.com.br/img/post/facebook/650-366/iomg08iiv2j4lc78upnirs2k604648e8a5670fd437a87920eeb9140b94.png" width="500" alt="Fluxo de funcionamento do Google Cloud Messaging">
 
+### Lado Web ⚠
+
+Este é um projeto que contém também um lado Web, o backend.
+
+Como apresentado ainda na primeira aula da série, é muito importante que o lado Web esteja já implementado antes mesmo de se iniciarem as codificações Android.
+
+O backend Web do projeto passará por atualizações de acordo com a avanço nas aulas da série.
+
+Para ter acesso ao lado Web completo, entre no repositório GitHub a seguir: [Chat GCM Exemplo (lado Web)](https://github.com/viniciusthiengo/push-message-serie-web).
+
 ### Todas as aulas
 
 A seguir a lista de todas as aulas sobre esse projeto de chat com o GCM.
