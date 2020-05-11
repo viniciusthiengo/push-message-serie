@@ -1,6 +1,6 @@
 # Chat GCM Exemplo - Google Cloud Messaging (Java Android)
 
-**⚠🚫[DEPRECIADA] A API GCM se tornou obsoleta. Para ainda conseguir utilizar uma API nativa Android para notificações push siga com a (FCM (Firebase Cloud Messaging))(https://www.thiengo.com.br/fcm-android-dominio-do-problema-implementacao-e-testes-com-servidor-de-aplicativo-parte-1).**
+**⚠🚫[DEPRECIADA] A API GCM se tornou obsoleta. Para ainda conseguir utilizar uma API nativa Android para notificações push siga com a (FCM)(https://www.thiengo.com.br/fcm-android-dominio-do-problema-implementacao-e-testes-com-servidor-de-aplicativo-parte-1).**
 
 Projeto Java Android da série de artigos sobre como utilizar o GCM (Google Cloud Messaging), sistema nativo Android de notificações push. Série do Blog [Thiengo.com.br](https://www.thiengo.com.br).
 
