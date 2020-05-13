@@ -40,7 +40,7 @@ A ordem a ser seguida é exatamente a mesma ordem apresentada abaixo:
 
 6. [GCM e AWS SNS. Push Message Android - Parte 6](https://www.thiengo.com.br/gcm-e-aws-sns-push-message-android-parte-6);
 
-7. [Parse Notification. Push Message Android - Parte 7](https://www.thiengo.com.br/parse-notification-push-message-android-parte-7).
+7. [Parse Notification. Push Message Android - Parte 7](https://www.thiengo.com.br/parse-notification-push-message-android-parte-7) - este conteúdo contém o próprio [projeto Android em repositório GitHub](https://github.com/viniciusthiengo/parse-notification-example).
 
 ### AndroidX
 
